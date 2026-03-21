@@ -154,8 +154,9 @@ Deben descargar los proyectos Politics de la siguiente URL:
 
 ## **3.1 Backend en Springboot y Kotlin** {#3.1-backend-en-springboot-y-kotlin}
 
-| git clone git@github.com:uqbar-project/eg-politics-springboot-kotlin.git |
-| :---- |
+```bash
+git clone git@github.com:uqbar-project/eg-politics-springboot-kotlin.git
+```
 
 * Levantan IntelliJ IDEA (como dice la página de [Software](https://wiki.uqbar.org/wiki/articles/kotlin-preparacion-de-un-entorno-de-desarrollo.html))  
 * Importan el proyecto Gradle como indica [este tutorial](https://wiki.uqbar.org/wiki/articles/kotlin-bajar-un-proyecto-gradle-de-un-repositorio-git.html)
@@ -164,8 +165,9 @@ Deben descargar los proyectos Politics de la siguiente URL:
 
 Para levantar la base de datos en un ambiente dockerizado, solo tienen que ejecutar este comando en la consola:
 
-| docker compose up |
-| :---- |
+```bash
+docker compose up
+```
 
 **IMPORTANTE:** no poner el guión para docker-compose, porque es la v1 que desde junio 2023 queda deprecada.
 
@@ -175,8 +177,9 @@ Eso también permite levantar el cliente pgAdmin en [http://localhost:5050](http
 
 En la carpeta *src/main/resources* encontrarán un archivo *application.yml* que contiene la información de configuración de nuestro proyecto. Atención a estos parámetros:
 
-| spring:  \#   base de datos posta  datasource:    url: jdbc:postgresql://0.0.0.0:5432/politics    username: postgres    password: postgres    driver-class-name: org.postgresql.Driver |
-| :---- |
+```yaml
+spring:  #   base de datos posta  datasource:    url: jdbc:postgresql://0.0.0.0:5432/politics    username: postgres    password: postgres    driver-class-name: org.postgresql.Driver
+```
 
 Si eligen otra base de datos que no sea PostgreSQL deben buscar en google el nombre del driver correspondiente, les dejamos algunos[^1]:
 
@@ -188,20 +191,27 @@ Si eligen otra base de datos que no sea PostgreSQL deben buscar en google el nom
 
 Y también cambiar la dependencia en el build.gradle.kts. 
 
-| `// conexión a la base de datos runtimeOnly("org.postgresql:postgresql")` |
-| :---- |
+```kotlin
+// conexión a la base de datos
+ runtimeOnly("org.postgresql:postgresql")
+```
 
 Otra cosa importante, el parámetro open-in-view lo cambiaremos inicialmente a true:
 
-| jpa:   open-in-view: true |
-| :---- |
+```yaml
+jpa:
+   open-in-view: true
+```
 
 Para levantar el backend: Run \> PoliticsApplication.
 
 ## **3.4 Frontend en React** {#3.4-frontend-en-react}
 
-| git clone git@github.com:uqbar-project/eg-politics-react.git cd eg-politics-react/ pnpm run dev |
-| :---- |
+```bash
+git clone git@github.com:uqbar-project/eg-politics-react.git
+cd eg-politics-react/
+pnpm run dev
+```
 
 En el branch *master* está la solución pegándole a un backend real, durante el taller iremos viendo las diferentes páginas y cómo resolverlo.
 
@@ -239,8 +249,17 @@ En la misma vista podemos ir agregando promesas para cada candidate.
 
 Vamos a contar algunas decisiones que tenemos que tomar para poder mapear cada entidad a su correspondiente implementación en un RDBMS. Comenzamos por la zona:
 
-| @Entity class Zona {    @Id    @GeneratedValue    var id: Long? \= null    @Column(length=150)    lateinit var descripcion: String    @OneToMany(fetch=FetchType.LAZY)    lateinit var candidates: MutableSet\<Candidate\> |
-| :---- |
+```kt
+@Entity class Zona {
+    @Id
+    @GeneratedValue
+    var id: Long? = null
+    @Column(length=150)
+    lateinit var descripcion: String
+    @OneToMany(fetch=FetchType.LAZY)
+    lateinit var candidates: MutableSet<Candidate>
+}
+```
 
 * la annotation @Entity (jakarta.persistence.Entity[^2]) permite decirle a Spring Boot que es una entidad que se va a persistir  
 * debemos generar un atributo nuevo para el identificador: cada zona ¿define una clave natural o subrogada? La descripción no parece ser una buena clave candidata. Delegamos entonces la responsabilidad de crear una clave autogenerada al motor de la base de datos, mediante nuevas annotations @Id y @GeneratedValue. Podés leer más en [este artículo de Baeldung](https://www.baeldung.com/hibernate-identifiers) y [este otro de Supabase](https://supabase.com/blog/choosing-a-postgres-primary-key).  
@@ -263,15 +282,29 @@ Esta decisión es independiente de la tecnología de frontend y backend, tenemos
 
 4\. **Cascade Type:** otra decisión importante es entender si la relación entre Zona y Candidate es una relación entidad padre-hija, lo que en UML se conocía como [composition](https://www.uml-diagrams.org/composition.html). Pero los ciclos de vida de un Candidato y su zona son diferentes, une candidate podría eventualmente cambiar de zona, y si eliminamos una zona esto no necesariamente significa que debamos eliminar todes sus candidates. Entonces no agregamos a la relación one-to-many ningún tipo de anotación de cascada:
 
-|    @OneToMany(fetch=FetchType.LAZY)    lateinit var candidates: MutableSet\<Candidate\> |
-| :---- |
+```kt
+@OneToMany(fetch=FetchType.LAZY) 
+lateinit var candidates: MutableSet<Candidate>
+```
 
 Los imports son todos del package jakarta.persistence
 
 ## **6.2 Candidate** {#6.2-candidate}
 
-| @Entity class Candidate {    @Id @GeneratedValue    var id: Long? \= null    @Column(length=150)    var nombre \= ""    @ManyToOne    var partido: Partido? \= null    var votos \= 0    @OneToMany(fetch=FetchType.LAZY, cascade= \[CascadeType.ALL\])    @OrderColumn    var promesas \= mutableListOf\<Promesa\>() |
-| :---- |
+```kt
+@Entity class Candidate {
+    @Id @GeneratedValue
+    var id: Long? = null
+    @Column(length=150)
+    var nombre = ""
+    @ManyToOne
+    var partido: Partido? = null
+    var votos = 0
+    @OneToMany(fetch=FetchType.LAZY, cascade= [CascadeType.ALL])
+    @OrderColumn
+    var promesas = mutableListOf<Promesa>()
+}
+```
 
 * Definimos la clave subrogada (un nuevo atributo id)  
 * La cantidad de votos no tiene una anotación @Column, sin embargo se persistirá, a menos que le indiques que no debe participar (con la anotación @Transient de jakarta.persistence o bien con el modificador *transient*, que es nativo de Java e independiente de cualquier framework[^3])  
@@ -280,7 +313,7 @@ Los imports son todos del package jakarta.persistence
   * La relación de promesas queremos almacenarla respetando el orden en que fuimos cargando cada una, independientemente de la fecha, entonces utilizaremos una lista  
   * además la promesa está asociada al candidate (no puede existir la promesa sin el candidate que la hace), por eso vamos a trabajar con actualizaciones en cascada  
   * por defecto no queremos traer las promesas, vamos a tener que especificar cuándo sí  
-* también guardamos las opiniones de une candidate, en orden (por eso una lista). Pero en el modelo de objetos será simplemente un String. Como no hay atributos multivaluados en el modelo relacional, eso se traducirá a una tabla candidate\_opiniones, como podrán ver cuando levantemos la aplicación y nos conectemos con un cliente SQL.  
+* también guardamos las opiniones de une candidate, en orden (por eso una lista). Pero en el modelo de objetos será simplemente un String. Como no hay atributos multivaluados en el modelo relacional, eso se traducirá a una tabla candidate_opiniones, como podrán ver cuando levantemos la aplicación y nos conectemos con un cliente SQL.  
 * que *promesas* sea una referencia var y no val tiene que ver con detalles de implementación
 
 ## **6.3 Promesa** {#6.3-promesa}
@@ -288,23 +321,54 @@ Los imports son todos del package jakarta.persistence
 * Definimos las conversiones de tipo  
 * e incorporamos el identificador unívoco
 
-| @Entity class Promesa(@Column(length \= 255) var accionPrometida: String \= "") {    @Id    @GeneratedValue    var id: Long? \= null    @Column    var fecha: LocalDate \= LocalDate.now() |
-| :---- |
+```kt
+@Entity class Promesa(@Column(length = 255) var accionPrometida: String = "") {
+    @Id
+    @GeneratedValue
+    var id: Long? = null
+    @Column
+    var fecha: LocalDate = LocalDate.now()
+}
+```
 
 ## **6.4 Partido político** {#6.4-partido-político}
 
 Ahora es turno del partido político, que tiene dos subclases. ¿Qué estrategia adoptamos? Con fines didácticos vamos a comenzar con la estrategia *JOINED*.
 
-| @Entity @JsonTypeInfo(use \= JsonTypeInfo.Id.NAME, include \= JsonTypeInfo.As.PROPERTY, property \= "type") @JsonSubTypes(    JsonSubTypes.Type(value \= Peronista::class, name \= "PJ"),    JsonSubTypes.Type(value \= Preservativo::class, name \= "PRE") ) @Inheritance(strategy=InheritanceType.JOINED) abstract class Partido {    @Id @GeneratedValue    var id: Long? \= null    @Column(length=150)    lateinit var nombre: String    @Column    var afiliados: Int \= 0 |
-| :---- |
+```kt
+@Entity 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type") 
+@JsonSubTypes(
+    JsonSubTypes.Type(value = Peronista::class, name = "PJ"),
+    JsonSubTypes.Type(value = Preservativo::class, name = "PRE")
+) 
+@Inheritance(strategy=InheritanceType.JOINED) 
+abstract class Partido {
+    @Id @GeneratedValue
+    var id: Long? = null
+    @Column(length=150)
+    lateinit var nombre: String
+    @Column
+    var afiliados: Int = 0
+}
+```
 
 Estamos asociando las dos subclases a dos valores diferentes:
 
 * PJ para las instancias de peronistas  
 * PRE para las instancias de preservativo
 
-| @Entity class Peronista : Partido() {    @Column    var populista \= false } @Entity class Preservativo : Partido() {    @Column    var fechaCreacion: LocalDate \= LocalDate.now() |
-| :---- |
+```kt
+@Entity class Peronista : Partido() {
+    @Column
+    var populista = false
+}
+
+@Entity class Preservativo : Partido() {
+    @Column
+    var fechaCreacion: LocalDate = LocalDate.now()
+}
+```
 
 # **7 Repositorios** {#7-repositorios}
 
@@ -312,8 +376,9 @@ Estamos asociando las dos subclases a dos valores diferentes:
 
 Springboot permite definir un repositorio en forma bastante declarativa, solamente basta con escribir una interfaz que extienda de CrudRepository:
 
-| interface ZonaRepository : CrudRepository\<Zona, Long\> { |
-| :---- |
+```kt
+interface ZonaRepository : CrudRepository<Zona, Long> {
+```
 
 Recordemos que CRUD son las siglas de lo que en castellano es Alta-Baja-Modificación-Consulta: Create, Retrieve, Update y Delete. Por defecto, la interfaz CrudRepository define los siguientes métodos:
 
@@ -323,8 +388,16 @@ Recordemos que CRUD son las siglas de lo que en castellano es Alta-Baja-Modifica
 * findAll, permite traer todas las instancias persistidas de esta entidad  
 * y muchos otros, como cuenta [la página específica de repositorios de Spring Boot](https://docs.spring.io/spring-data/data-commons/docs/1.6.1.RELEASE/reference/html/repositories.html)
 
-| `public interface CrudRepository<T, ID> extends Repository<T, ID> {   <S extends T> S save(S entity);   Optional<T> findById(ID id);   Iterable<T> findAll();   Iterable<T> findAllById(Iterable<ID> ids);   long count();   void delete(T entity);` |
-| :---- |
+```java
+public interface CrudRepository<T, ID> extends Repository<T, ID> {
+    <S extends T> S save(S entity);
+    Optional<T> findById(ID id);
+    Iterable<T> findAll();
+    Iterable<T> findAllById(Iterable<ID> ids);
+    long count();
+    void delete(T entity);
+}
+```
 
 CrudRepository (escrito en lenguaje Java como ven) necesita dos generics:
 
@@ -333,8 +406,9 @@ CrudRepository (escrito en lenguaje Java como ven) necesita dos generics:
 
 Para ofrecer búsquedas por descripción, simplemente tenemos que seguir la convención de Springboot, definiendo un método que devuelva la lista de zonas con un contrato que se llame findByXXX donde XXX es alguno de los atributos de zona:
 
-| `fun findByDescripcion(descripcion: String): List<Zona>` |
-| :---- |
+```kt
+fun findByDescripcion(descripcion: String): List<Zona>
+```
 
 Springboot arma automágicamente la consulta.
 
@@ -371,8 +445,23 @@ Necesitamos también un método que sepa persistir los objetos. Para eso debemos
 
 En versiones más puras de JPA, podemos manejar manualmente la transacción, como puede verse en [este ejemplo](https://github.com/uqbar-project/eg-politics-hibernate-xtend/blob/jpa/src/main/java/ar/edu/politics/repos/AbstractRepo.xtend):
 
-| fun create(t: T) {   val entityManager \= this.getEntityManager()   try {     entityManager.apply {       transaction.begin()       persist(t)       transaction.commit()     }   } catch (e: PersistenceException) {     entityManager.transaction.rollback()     throw new RuntimeException("Ocurrió un error, la operación no puede completarse", e)   } finally {     entityManager.close()   } } |
-| :---- |
+```kt
+fun create(t: T) {
+    val entityManager = this.getEntityManager()
+    try {
+        entityManager.apply {
+            transaction.begin()
+            persist(t)
+            transaction.commit()
+        }
+    } catch (e: PersistenceException) {
+        entityManager.transaction.rollback()
+        throw new RuntimeException("Ocurrió un error, la operación no puede completarse", e)
+    } finally {
+        entityManager.close()
+    }
+}
+```
 
 ### **7.4.2 Transacción declarativa** {#7.4.2-transacción-declarativa}
 
@@ -384,8 +473,21 @@ Con Spring, aparece la idea de **transacción declarativa**: mediante una anotac
 
 Podemos ver el componente CandidateService, donde los métodos de lectura no necesitan ninguna anotación, o bien usamos @Transactional(readOnly=true) indicando que **no queremos crear ninguna transacción** mientras que en la actualización sí generamos la anotación @Transactional, que reemplaza el mecanismo try/catch/finally:
 
-| @Service class CandidateService {    @Autowired    lateinit var candidateRepository: CandidateRepository    @Transactional(readOnly\=true)    fun getCandidate(id: Long): Candidate \=        ...    @Transactional    fun actualizarCandidate(candidateNuevo: Candidate, id: Long): Candidate { |
-| :---- |
+```kt
+@Service class CandidateService {
+    @Autowired
+    lateinit var candidateRepository: CandidateRepository
+    
+    @Transactional(readOnly=true)
+    fun getCandidate(id: Long): Candidate =
+        ...
+    
+    @Transactional
+    fun actualizarCandidate(candidateNuevo: Candidate, id: Long): Candidate {
+        ...
+    }
+}
+```
 
 Una vez más recordamos la ventaja de tener una solución declarativa: hay que preocuparse por menos cosas, queda resuelto el manejo de la transacción dentro del método *save* por un algoritmo que no depende de nosotros.
 
@@ -393,8 +495,15 @@ Una vez más recordamos la ventaja de tener una solución declarativa: hay que p
 
 Hacemos lo mismo con el Partido y el Candidato:
 
-| interface PartidoRepository : CrudRepository\<Partido, Long\> {    fun findByNombre(nombre: String): Optional\<Partido\> }  interface CandidateRepository : CrudRepository\<Candidate, Long\> {    fun findByNombre(nombre: String): Optional\<Candidate\> } |
-| :---- |
+```kt
+interface PartidoRepository : CrudRepository<Partido, Long> {
+    fun findByNombre(nombre: String): Optional<Partido>
+}
+
+interface CandidateRepository : CrudRepository<Candidate, Long> {
+    fun findByNombre(nombre: String): Optional<Candidate>
+}
+```
 
 Más adelante comentaremos los otros métodos.
 
@@ -418,126 +527,144 @@ Cuando nuestra aplicación trabaja con el *concern* de persistencia vemos que se
 
 Para traer las zonas, configuramos nuestro primer servicio por http: GET a “/zonas”:
 
-| @RestController @CrossOrigin(origins \= \["\*"\], methods= \[RequestMethod.GET\]) class ZonaController {    @Autowired    private lateinit var zonaService: ZonaService    @GetMapping("/zonas")    fun getZonas() \= zonaService.getZonas() |
-| :---- |
+```kt
+@RestController 
+@CrossOrigin(origins = ["*"], methods= [RequestMethod.GET]) 
+class ZonaController {
+    @Autowired
+    private lateinit var zonaService: ZonaService
+    
+    @GetMapping("/zonas")
+    fun getZonas() = zonaService.getZonas()
+}
+```
 
 ZonaService en su método getZonas avisa a Springboot que no necesita abrir una transacción y delega a su vez en el repositorio:
 
-| @Service class ZonaService {    @Autowired    lateinit var zonaRepository: ZonaRepository     @Transactional(readOnly \= true)    fun getZonas() \= zonaRepository.findAll() |
-| :---- |
+```kt
+@Service class ZonaService {
+    @Autowired
+    lateinit var zonaRepository: ZonaRepository
+    
+    @Transactional(readOnly = true)
+    fun getZonas() = zonaRepository.findAll()
+}
+```
 
 Si levantamos la aplicación y desde un POSTMAN hacemos el request a [http://localhost:8080/zonas](http://localhost:8080/zonas), vemos el JSON que nos devuelve:
 
-\[  
-   {  
-       "id": 26,  
-       "descripcion": "Elecciones nacionales",  
-       "candidatos": \[  
-           {  
-               "id": 4,  
-               "nombre": "Julio Sosa",  
-               "partido": {  
-                   "type": "PJ",  
-                   "id": 1,  
-                   "nombre": "FREJULI",  
-                   "afiliados": 60000,  
-                   "populista": true  
-               },  
-               "votos": 0,  
-               "promesas": \[  
-                   {  
-                       "id": 433,  
-                       "fecha": "2021-01-05",  
-                       "accionPrometida": "Terminar con la inseguridad"  
-                   },  
-                   {  
-                       "id": 434,  
-                       "fecha": "2021-01-05",  
-                       "accionPrometida": "Aborto para unos, banderitas para otros"  
-                   }  
-               \],  
-               "opiniones": \[\]  
-           },  
-       \],  
-   },  
-\]    
+```json
+[
+   {
+       "id": 26,
+       "descripcion": "Elecciones nacionales",
+       "candidatos": [
+           {
+               "id": 4,
+               "nombre": "Julio Sosa",
+               "partido": {
+                   "type": "PJ",
+                   "id": 1,
+                   "nombre": "FREJULI",
+                   "afiliados": 60000,
+                   "populista": true
+               },
+               "votos": 0,
+               "promesas": [
+                   {
+                       "id": 433,
+                       "fecha": "2021-01-05",
+                       "accionPrometida": "Terminar con la inseguridad"
+                   },
+                   {
+                       "id": 434,
+                       "fecha": "2021-01-05",
+                       "accionPrometida": "Aborto para unos, banderitas para otros"
+                   }
+               ],
+               "opiniones": []
+           }
+       ]
+   }
+]
+```
 
 No solo nos trajo la lista de zonas, sino también todos sus datos relacionados en profundidad (candidatos, promesas y opiniones). Si vemos el log de consultas hechas a la base en la consola de nuestro IDE notaremos que hay una gran cantidad de queries, el primero es obvio:
 
 select  
-   zona0\_.id as id1\_7\_,  
-   zona0\_.descripcion as descripc2\_7\_   
+   zona0_.id as id1_7_,  
+   zona0_.descripcion as descripc2_7_   
 from  
-   zona zona0\_
+   zona zona0_
 
 Pero luego, por cada zona se repiten n queries, asociados a cada candidate:
 
 select  
-   candidatos0\_.zona\_id as zona\_id1\_8\_0\_,  
-   candidatos0\_.candidatos\_id as candidat2\_8\_0\_,  
-   candidato1\_.id as id1\_0\_1\_,  
-   candidato1\_.nombre as nombre2\_0\_1\_,  
-   candidato1\_.partido\_id as partido\_4\_0\_1\_,  
-   candidato1\_.votos as votos3\_0\_1\_,  
-   partido2\_.id as id1\_3\_2\_,  
-   partido2\_.afiliados as afiliado2\_3\_2\_,  
-   partido2\_.nombre as nombre3\_3\_2\_,  
-   partido2\_1\_.populista as populist1\_4\_2\_,  
-   partido2\_2\_.fecha\_creacion as fecha\_cr1\_5\_2\_,  
+   candidatos0_.zona_id as zona_id1_8_0_,  
+   candidatos0_.candidatos_id as candidat2_8_0_,  
+   candidato1_.id as id1_0_1_,  
+   candidato1_.nombre as nombre2_0_1_,  
+   candidato1_.partido_id as partido_4_0_1_,  
+   candidato1_.votos as votos3_0_1_,  
+   partido2_.id as id1_3_2_,  
+   partido2_.afiliados as afiliado2_3_2_,  
+   partido2_.nombre as nombre3_3_2_,  
+   partido2_1_.populista as populist1_4_2_,  
+   partido2_2_.fecha_creacion as fecha_cr1_5_2_,  
    case  
       when  
-         partido2\_1\_.id is not null   
+         partido2_1_.id is not null   
       then  
          1   
       when  
-         partido2\_2\_.id is not null   
+         partido2_2_.id is not null   
       then  
          2   
       when  
-         partido2\_.id is not null   
+         partido2_.id is not null   
       then  
          0   
    end  
-   as clazz\_2\_   
+   as clazz_2_   
 from  
-   zona\_candidatos candidatos0\_   
+   zona_candidatos candidatos0_   
    inner join  
-      candidato candidato1\_   
-      on candidatos0\_.candidatos\_id \= candidato1\_.id   
+      candidato candidato1_   
+      on candidatos0_.candidatos_id \= candidato1_.id   
    left outer join  
-      partido partido2\_   
-      on candidato1\_.partido\_id \= partido2\_.id   
+      partido partido2_   
+      on candidato1_.partido_id \= partido2_.id   
    left outer join  
-      peronista partido2\_1\_   
-      on partido2\_.id \= partido2\_1\_.id   
+      peronista partido2_1_   
+      on partido2_.id \= partido2_1_.id   
    left outer join  
-      preservativo partido2\_2\_   
-      on partido2\_.id \= partido2\_2\_.id   
+      preservativo partido2_2_   
+      on partido2_.id \= partido2_2_.id   
 where  
-   candidatos0\_.zona\_id \=?
+   candidatos0_.zona_id \=?
 
 select  
-   promesas0\_.candidato\_id as candidat1\_2\_0\_,  
-   promesas0\_.promesas\_id as promesas2\_2\_0\_,  
-   promesas0\_.promesas\_order as promesas3\_0\_,  
-   promesa1\_.id as id1\_6\_1\_,  
-   promesa1\_.accion\_prometida as accion\_p2\_6\_1\_,  
-   promesa1\_.fecha as fecha3\_6\_1\_   
+   promesas0_.candidato_id as candidat1_2_0_,  
+   promesas0_.promesas_id as promesas2_2_0_,  
+   promesas0_.promesas_order as promesas3_0_,  
+   promesa1_.id as id1_6_1_,  
+   promesa1_.accion_prometida as accion_p2_6_1_,  
+   promesa1_.fecha as fecha3_6_1_   
 from  
-   candidato\_promesas promesas0\_   
+   candidato_promesas promesas0_   
    inner join  
-      promesa promesa1\_   
-      on promesas0\_.promesas\_id \= promesa1\_.id   
+      promesa promesa1_   
+      on promesas0_.promesas_id \= promesa1_.id   
 where  
-   promesas0\_.candidato\_id \=? Hibernate:   
+   promesas0_.candidato_id \=? Hibernate:   
    select  
-      opiniones0\_.candidato\_id as candidat1\_1\_0\_,  
-      opiniones0\_.opiniones as opinione2\_1\_0\_,  
-      opiniones0\_.opiniones\_order as opinione3\_0\_   
+      opiniones0_.candidato_id as candidat1_1_0_,  
+      opiniones0_.opiniones as opinione2_1_0_,  
+      opiniones0_.opiniones_order as opinione3_0_   
    from  
-      candidato\_opiniones opiniones0\_   
+      candidato_opiniones opiniones0_   
    where  
-      opiniones0\_.candidato\_id \=?
+      opiniones0_.candidato_id \=?
 
 Esto se conoce como el **problema de los n+1 queries**, cuando tenemos
 
@@ -559,8 +686,9 @@ Siempre es más rápido ejecutar un query que traiga 1.000 registros y no 100 qu
 
 Antes de solucionar este inconveniente, vamos a cambiar la configuración de nuestro archivo *application.yml*:
 
-| jpa:  open-in-view: false |
-| :---- |
+```yaml
+jpa:  open-in-view: false
+```
 
 El valor por defecto cuando no tenemos esta configuración es *true*, lo cual provoca que la sesión permanezca viva hasta que se termine cada método del controller. Si bien podría parecer razonable tratar de mantener la sesión activa para no pagar el costo de conexión y desconexión antes de traer los datos, mantener esta configuración tiene desventajas importantes:
 
@@ -587,18 +715,33 @@ Este grafo lo construyó Hibernate cuando hicimos la búsqueda de zonas:
 
 El serializador toma cada zona e intenta acceder a la colección de candidatos, pero **la sesión a la base ahora dura solamente dentro del contexto de la llamada al repositorio.** Por eso recibimos el error Lazy Initialization failed. Vamos a cambiar el serializador por defecto que trae Spring: solo nos interesa el id y la descripción para llenar el combo (en el service):
 
-| fun getZonas(): List\<ZonaPlanaDTO\> \=    zonaRepository     .findAll()     .map { zona \-\> ZonaPlanaDTO(zona.id\!\!, zona.descripcion) } |
-| :---- |
+```kt
+fun getZonas(): List<ZonaPlanaDTO> =
+    zonaRepository
+        .findAll()
+        .map { zona -> ZonaPlanaDTO(zona.id!!, zona.descripcion) }
+```
 
 La implementación del DTO es sencilla:
 
-| data class ZonaPlanaDTO(val id: Long, val descripcion: String) |
-| :---- |
+```kt
+data class ZonaPlanaDTO(val id: Long, val descripcion: String)
+```
 
 Ahora hacemos la consulta a POSTMAN, ya no hay error y además traemos solo la información que queremos:
 
-| \[   {     "id": 26,     "descripcion": "Elecciones nacionales"   },   {     "id": 27,     "descripcion": "Springfield"   } \] |
-| :---- |
+```json
+[
+   {
+     "id": 26,
+     "descripcion": "Elecciones nacionales"
+   },
+   {
+     "id": 27,
+     "descripcion": "Springfield"
+   }
+]
+```
 
 La primera estrategia que evita el error *lazy initialization failed* consiste simplemente en evitar llamadas innecesarias a las relaciones one-to-many que sean lazy.
 
@@ -606,18 +749,33 @@ La primera estrategia que evita el error *lazy initialization failed* consiste s
 
 Una forma bastante frecuente de solucionar el error de las colecciones lazy es modificar el tipo de fetch de las relaciones \*-to-many, tanto para zona
 
-| class Zona {    ...    @OneToMany(fetch=FetchType.EAGER)    lateinit var candidates: MutableSet\<Candidate\> |
-| :---- |
+```kt
+class Zona {
+    ...
+    @OneToMany(fetch=FetchType.EAGER)
+    lateinit var candidates: MutableSet<Candidate>
+}
+```
 
 como para el candidate
 
-| class Candidate {    ...        @OneToMany(fetch=FetchType.EAGER, cascade= \[CascadeType.ALL\])    @OrderColumn    var promesas \= mutableListOf\<Promesa\>()    @ElementCollection(fetch=FetchType.EAGER)    @OrderColumn    var opiniones \= mutableListOf\<String\>() |
-| :---- |
+```kt
+class Candidate {
+    ...
+    @OneToMany(fetch=FetchType.EAGER, cascade= [CascadeType.ALL])
+    @OrderColumn
+    var promesas = mutableListOf<Promesa>()
+    @ElementCollection(fetch=FetchType.EAGER)
+    @OrderColumn
+    var opiniones = mutableListOf<String>()
+}
+```
 
 Esto resuelve momentáneamente el problema para el serializador, incluso si elegimos volver a la versión anterior que no utiliza el DTO:
 
-| fun getZonas() \= zonaRepository.findAll() |
-| :---- |
+```kt
+fun getZonas() = zonaRepository.findAll()
+```
 
 No obstante,
 
@@ -637,9 +795,9 @@ Así que volvemos a nuestra idea original:
 
 Veamos cómo traer todas las zonas:
 
-| const ZONA\_URI \= '/zonas/' async zonas() {   const callToZonas \= await axios.get(SERVER\_CONNECTION \+ ZONA\_URI)   return callToZonas.data } |
-| :---- |
-|  |
+```javascript
+const ZONA_URI = '/zonas/' async zonas() {   const callToZonas = await axios.get(SERVER_CONNECTION + ZONA_URI)   return callToZonas.data }
+```
 
 ![][image10]Todavía nos falta asociar la selección de una zona con sus respectivos candidates y partidos.
 
@@ -661,18 +819,40 @@ El controller va a recibir como input una zona específica, y tiene que devolver
 
 En este caso vamos a construir un serializador custom basado en el estándar de Spring:
 
-| class ZonaDetalleSerializer : StdSerializer\<Zona\>(Zona::class.java) {    @Throws(IOException::class)    override fun serialize(zona: Zona, generator: JsonGenerator, provider: SerializerProvider) {        with (generator) {            writeStartObject()            if (zona.id \!== null) {                writeNumberField("id", zona.id\!\!)            }            writeStringField("descripcion", zona.descripcion)            val candidatosDTO \= zona.candidates.map { CandidatoPlanoDTO(it) }            writeObjectField("candidates", candidatosDTO.toList())            writeEndObject()        }    } } |
-| :---- |
+```kt
+class ZonaDetalleSerializer : StdSerializer<Zona>(Zona::class.java) {
+    @Throws(IOException::class)
+    override fun serialize(zona: Zona, generator: JsonGenerator, provider: SerializerProvider) {
+        with (generator) {
+            writeStartObject()
+            if (zona.id !== null) {
+                writeNumberField("id", zona.id!!)
+            }
+            writeStringField("descripcion", zona.descripcion)
+            val candidatosDTO = zona.candidates.map { CandidatoPlanoDTO(it) }
+            writeObjectField("candidates", candidatosDTO.toList())
+            writeEndObject()
+        }
+    }
+}
+```
 
 El controller puede usar el serializador que acabamos de definir:
 
-| fun getZona(@PathVariable id: Long): Zona {    ObjectMapper().registerModule(        SimpleModule().addSerializer(ZonaDetalleSerializer())    )    return zonaService.findById(id) } |
-| :---- |
+```kt
+fun getZona(@PathVariable id: Long): Zona {
+    ObjectMapper().registerModule(
+        SimpleModule().addSerializer(ZonaDetalleSerializer())
+    )
+    return zonaService.findById(id)
+}
+```
 
 Una segunda alternativa es definir el serializador como el default para la zona:
 
-| @JsonSerialize(using=ZonaDetalleSerializer::class) class Zona { |
-| :---- |
+```kt
+@JsonSerialize(using=ZonaDetalleSerializer::class) class Zona { ... }
+```
 
 Una tercera podría consistir en definir un objeto DTO específico, como lo hicimos al traer todas las zonas disponibles. Y una cuarta podría ser trabajar con anotaciones Jackson (el framework de serialización/deserialización que utiliza spring boot) del tipo @JsonIgnore o @JsonProperty como pueden ver en [este artículo](https://www.baeldung.com/jackson-annotations)).
 
@@ -680,51 +860,88 @@ Por último, la que tomamos como la solución más simple es utilizar la annotat
 
 Lo requerido por el framework  Jackson es crear una clase con una serie de clases / interfaces anidadas que representan las diferentes vistas que el modelo necesita:
 
-| internal class View {     internal interface Zona {         interface Detalle         interface Plana     } } |
-| :---- |
+```kt
+internal class View {
+    internal interface Zona {
+        interface Detalle
+        interface Plana
+    }
+}
+```
 
 Esto representa que tenemos para la zona dos posibles vistas: Detalle (que sirve para generar la tabla con toda la información) y Plana (la que utilizamos para el dropdown / combo). Si además fuese necesario que otro objeto tuviese más de una vista podría anidarse al mismo nivel que la Zona.
 
 Lo que nos queda es utilizar la annotation de @JsonView en dos lugares. El primero es en los atributos que vamos a querer tener en cuenta para serializar en una vista 
 
-| @Entity class Zona {    ...    @JsonView(View.Zona.Plana::class, View.Zona.Detalle::class)    var id: Long? \= null    ...    @JsonView(View.Zona.Plana::class, View.Zona.Detalle::class)    lateinit var descripcion: String    ...    @JsonView(View.Zona.Detalle::class)    lateinit var candidates: MutableSet\<Candidate\> |
-| :---- |
+```kt
+@Entity class Zona {
+    ...
+    @JsonView(View.Zona.Plana::class, View.Zona.Detalle::class)
+    var id: Long? = null
+    ...
+    @JsonView(View.Zona.Plana::class, View.Zona.Detalle::class)
+    lateinit var descripcion: String
+    ...
+    @JsonView(View.Zona.Detalle::class)
+    lateinit var candidates: MutableSet<Candidate>
+}
+```
 
 Así se puede ver como los campos id y descripción se toman en cuenta en ambas vistas mientras que el set de candidates se toma en cuenta solo para la vista de grilla. Incluso podemos ver qué campos de candidate se tienen en cuenta para esta serialización: id, nombre, partido y votos.
 
-| @Entity class Candidate {    ...    @JsonView(View.Zona.Detalle::class)    var id: Long? \= null    ...    @JsonView(View.Zona.Detalle::class)    var nombre \= ""    ...    @JsonView(View.Zona.Detalle::class)    var partido: Partido? \= null    @JsonView(View.Zona.Detalle::class)    var votos \= 0    ...    var promesas \= mutableListOf\<Promesa\>() |
-| :---- |
+```kt
+@Entity class Candidate {
+    ...
+    @JsonView(View.Zona.Detalle::class)
+    var id: Long? = null
+    ...
+    @JsonView(View.Zona.Detalle::class)
+    var nombre = ""
+    ...
+    @JsonView(View.Zona.Detalle::class)
+    var partido: Partido? = null
+    @JsonView(View.Zona.Detalle::class)
+    var votos = 0
+    ...
+    var promesas = mutableListOf<Promesa>()
+}
+```
 
 Por último, para evitar que nos aparezca una vez más el problema de Lazy Initialization Failed desde zona hacia la colección de candidates, vamos a agregar en el repository la anotación @EntityGraph, a la que podemos especificarle cuál es el grafo de objetos que nos vamos a traer en la consulta:
 
-| @EntityGraph(attributePaths=\["candidates.partido"\]) override fun findById(id: Long): Optional\<Zona\> |
-| :---- |
+```kt
+@EntityGraph(attributePaths=["candidates.partido"]) 
+override fun findById(id: Long): Optional<Zona>
+```
 
 Dentro del path el nombre "candidates" sale del nombre del atributo en la clase Zona (porque lo que mira Springboot es el modelo de objetos). Y al anidar la definición a partido, sabemos que hay que traer: la zona \+ sus candidates \+ el partido de cada candidate.
 
 Ahora sí, tenemos un único query que resuelve todo:
 
+```sql
 select  
    *\-- campos*  
 from  
-   zona zona0\_   
+   zona zona0_   
    left outer join  
-      zona\_candidatos candidatos1\_   
-      on zona0\_.id \= candidatos1\_.zona\_id   
+      zona_candidatos candidatos1_   
+      on zona0_.id \= candidatos1_.zona_id   
    left outer join  
-      candidato candidato2\_   
-      on candidatos1\_.candidatos\_id \= candidato2\_.id   
+      candidato candidato2_   
+      on candidatos1_.candidatos_id \= candidato2_.id   
    left outer join  
-      partido partido4\_   
-      on candidato2\_.partido\_id \= partido4\_.id   
+      partido partido4_   
+      on candidato2_.partido_id \= partido4_.id   
    left outer join  
-      peronista partido4\_1\_   
-      on partido4\_.id \= partido4\_1\_.id   
+      peronista partido4_1_   
+      on partido4_.id \= partido4_1_.id   
    left outer join  
-      preservativo partido4\_2\_   
-      on partido4\_.id \= partido4\_2\_.id   
+      preservativo partido4_2_   
+      on partido4_.id \= partido4_2_.id   
 where  
-   zona0\_.id \=?
+   zona0
+   _.id \=?
+```
 
 En resumen, éstas son las variantes a la hora de definir la serialización de nuestros objetos en los controllers:
 
@@ -739,8 +956,27 @@ En resumen, éstas son las variantes a la hora de definir la serialización de n
 
 Veamos cómo queda en el frontend el componente ConsultaCandidates:
 
-|  useEffect(() \=\> {    const getZonas \= async function() {      try {        const zonas \= await zonaService.zonas()        if (\!isEmpty(zonas)) {          await elegirZona(zonas, zonas\[0\])        }        setZonas(zonas)      } catch (e) {        console.log(e)        toast.current.show({ severity: 'error', summary: 'Ocurrió un error al traer las zonas de votación.', detail: e.message})      }    }    getZonas()    }, \[\]  ) |
-| :---- |
+```javascript
+useEffect(() => {
+    const getZonas = async function() {
+        try {
+            const zonas = await zonaService.zonas()
+            if (!isEmpty(zonas)) {
+                await elegirZona(zonas, zonas[0])
+            }
+            setZonas(zonas)
+        } catch (e) {
+            console.log(e)
+            toast.current.show({ 
+                severity: 'error', 
+                summary: 'Ocurrió un error al traer las zonas de votación.', 
+                detail: e.message
+            })
+        }
+    }
+    getZonas()
+}, [])
+```
 
 Por lo pronto tenemos las zonas, que solo tienen identificador y descripción. Cuando seleccionamos una zona, esto implica traernos del backend la zona con más datos (los candidatos, votos y el partido), pero ese objeto no va a estar en la lista original, por lo que tenemos que
 
@@ -749,13 +985,33 @@ Por lo pronto tenemos las zonas, que solo tienen identificador y descripción. C
 * reemplazar el elemento elegido con los datos que volvieron del backend  
 * no viene mal recordar que **la UI es responsable de capturar los mensajes de error al llamar al backend y mostrar un toast al usuario**
 
-| async function elegirZona(zonas, zona) {    try {      ...    } catch (e) {      console.log(e)      toast.current.show({ severity: 'error', summary: 'Ocurrió un error al traer la zona de votación seleccionada.', detail: e.message})    }  } |
-| :---- |
+```javascript
+async function elegirZona(zonas, zona) {
+    try {
+        // código para traer la zona del backend
+    } catch (e) {
+        console.log(e)
+        toast.current.show({ 
+            severity: 'error', 
+            summary: 'Ocurrió un error al traer la zona de votación seleccionada.', 
+            detail: e.message
+        })
+    }
+}
+```
 
 Esto implica también cambiar el combo / dropdown de zonas, para que ocurra exactamente lo mismo cuando modificamos nuestra elección de la zona como usuarios:
 
-| \<Dropdown style\={{width: '20em', textAlign: 'left'}} optionLabel\="descripcion" value\={zonaSeleccionada} options\={zonas} onChange\={(e) \=\> {elegirZona(zonas, e.value)}} .../\> |
-| :---- |
+```jsx
+<Dropdown 
+    style={{width: '20em', textAlign: 'left'}} 
+    optionLabel="descripcion" 
+    value={zonaSeleccionada} 
+    options={zonas} 
+    onChange={(e) => {elegirZona(zonas, e.value)}} 
+    ...
+/>
+```
 
 El resultado: tenemos una primera funcionalidad cerrada para visualizar zonas y candidates.  
 ![][image11]
@@ -766,13 +1022,23 @@ El resultado: tenemos una primera funcionalidad cerrada para visualizar zonas y 
 
 En el backend Incorporamos un endpoint específico en CandidateController, para traer los datos de un candidato:
 
-| @GetMapping("/candidates/{id}") fun getCandidate(@PathVariable id: Long) \=    candidateService.getCandidate(id) |
-| :---- |
+```kt
+@GetMapping("/candidates/{id}") 
+fun getCandidate(@PathVariable id: Long) =
+    candidateService.getCandidate(id)
+```
 
 El service avisa que no necesita abrir una transacción y delega al repository (además de lanzar una excepción si la persona candidata no existe):
 
-| @Transactional(readOnly=true) fun getCandidate(id: Long): Candidate \=    candidateRepository       .findById(id)       .orElseThrow {          ResponseStatusException(HttpStatus.NOT\_FOUND, "El candidato con identificador $id no existe")       } |
-| :---- |
+```kt
+@Transactional(readOnly=true) 
+fun getCandidate(id: Long): Candidate =
+    candidateRepository
+        .findById(id)
+        .orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "El candidato con identificador $id no existe")
+        }
+```
 
 El repositorio tiene un método findById que toma de la interfaz CrudRepository:
 
@@ -787,8 +1053,10 @@ Queremos traer toda la información de un candidate, esto implica que en el quer
 
 Volvemos a resolver el inconveniente con la anotación @EntityGraph:
 
-| @EntityGraph(attributePaths \= \["partido", "promesas", "opiniones"\]) override fun findById(id: Long): Optional\<Candidate\> |
-| :---- |
+```kt
+@EntityGraph(attributePaths = ["partido", "promesas", "opiniones"]) 
+override fun findById(id: Long): Optional<Candidate>
+```
 
 Recordemos que el nombre de la propiedad que estamos anotando dentro de la lista de attributePaths es el nombre de la relación desde el punto de vista del grafo de objetos. Ahora sí vemos cómo funciona desde Insomnia:  
 ![][image12]
@@ -797,18 +1065,36 @@ Recordemos que el nombre de la propiedad que estamos anotando dentro de la lista
 
 Para que la ficha de un candidate se pueda visualizar, tenemos que hacer algunos ajustes. En principio llamaremos al backend desde el service:
 
-|  async buscarPorId(idCandidate) {    const candidate \= await axios.get(SERVER\_CONNECTION \+ CANDIDATE\_URI \+ idCandidate)    const { id, nombre, partido, promesas } \= candidate.data    return new Candidate(id, nombre, partido.nombre, promesas)  } |
-| :---- |
+```javascript
+async buscarPorId(idCandidate) {
+    const candidate = await axios.get(SERVER_CONNECTION + CANDIDATE_URI + idCandidate)
+    const { id, nombre, partido, promesas } = candidate.data
+    return new Candidate(id, nombre, partido.nombre, promesas)
+}
+```
 
 Modificaremos el constructor de Candidate
 
-| export class Candidate {  constructor(\_id, \_nombre, \_partido, \_promesas) {    this.id \= \_id || lastId\++    ...    this.promesas \= (\_promesas || \[\]).map(({ id, accionPrometida, fecha }) \=\> new Promesa(id, accionPrometida, fecha))  } |
-| :---- |
+```javascript
+export class Candidate {
+    constructor(_id, _nombre, _partido, _promesas) {
+        this.id = _id || lastId++
+        ...
+        this.promesas = (_promesas || []).map(({ id, accionPrometida, fecha }) => 
+            new Promesa(id, accionPrometida, fecha)
+        )
+    }
+}
+```
 
 y el constructor de Promesa:
 
-| constructor(id, descripcionPromesa, fecha \= DateTime.local()) {    this.descripcion \= descripcionPromesa    this.fecha \= DateTime.fromISO(fecha) } |
-| :---- |
+```javascript
+constructor(id, descripcionPromesa, fecha = DateTime.local()) {
+    this.descripcion = descripcionPromesa
+    this.fecha = DateTime.fromISO(fecha)
+}
+```
 
 Ahora sí visualizamos la ficha correctamente:  
 ![][image13]
@@ -826,13 +1112,32 @@ En ambos casos tenemos que actualizar en el backend al candidate.
 
 Incorporamos un nuevo endpoint, un método PATCH que recibe el id del candidate y la información, y actualiza únicamente los votos o las promesas:
 
-| @PatchMapping("/candidates/{id}") fun actualizarCandidate(@RequestBody candidateNuevo: Candidate, @PathVariable id: Long) \=    candidateService.actualizarCandidate(candidateNuevo, id) |
-| :---- |
+```kt
+@PatchMapping("/candidates/{id}") 
+fun actualizarCandidate(@RequestBody candidateNuevo: Candidate, @PathVariable id: Long) =
+    candidateService.actualizarCandidate(candidateNuevo, id)
+```
 
 El service marca que la operación es transaccional y devuelve los datos del candidate actualizado:
 
-| @Transactional fun actualizarCandidate(candidateNuevo: Candidate, id: Long) \=     candidateRepository        .findById(id)        .map { candidate \-\>            // solo modificamos lo que tiene sentido            candidate.actualizarPromesas(candidateNuevo.promesas)            if (candidateNuevo.votos \> 0) {                candidate.votos \= candidateNuevo.votos            }            candidateRepository.save(candidate)            candidate        }        .orElseThrow {            ResponseStatusException(HttpStatus.NOT\_FOUND, "El candidato con identificador $id no existe")        } |
-| :---- |
+```kt
+@Transactional 
+fun actualizarCandidate(candidateNuevo: Candidate, id: Long) =
+    candidateRepository
+        .findById(id)
+        .map { candidate ->
+            // solo modificamos lo que tiene sentido
+            candidate.actualizarPromesas(candidateNuevo.promesas)
+            if (candidateNuevo.votos > 0) {
+                candidate.votos = candidateNuevo.votos
+            }
+            candidateRepository.save(candidate)
+            candidate
+        }
+        .orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "El candidato con identificador $id no existe")
+        }
+```
 
 Para eso utilizamos el Optional de Java, que permite manipular el uso de *nulls*:
 
@@ -847,8 +1152,19 @@ En el frontend debemos llamar a actualizar el back tanto al registrar los votos 
 ![][image14]  
 El problema está aquí:
 
-| const registrarVoto \= function(candidate) {    return \<Button icon\="pi pi-user-plus" tooltip\="Registrar Voto" className\="p-button-secondary p-button-raised p-button-rounded" onClick\={() \=\> {      candidate.registrarVoto() |
-| :---- |
+```jsx
+const registrarVoto = function(candidate) {
+    return <Button 
+        icon="pi pi-user-plus" 
+        tooltip="Registrar Voto" 
+        className="p-button-secondary p-button-raised p-button-rounded" 
+        onClick={() => {
+            candidate.registrarVoto()
+            ...
+        }}
+    />
+}
+```
 
 La consulta nos devuelve un candidate como JSON sin comportamiento. Tenemos dos alternativas:
 
@@ -857,28 +1173,62 @@ La consulta nos devuelve un candidate como JSON sin comportamiento. Tenemos dos 
 
 En ZonaService hacemos el siguiente cambio:
 
-| async getZonaSeleccionada(id) {   const callToZonaSeleccionada \= await axios.get(SERVER\_CONNECTION \+ '/zonas/' \+ id)   const zona \= callToZonaSeleccionada.data   zona.candidatos \= zona.candidatos.map(({ id,nombre,partido,votos }) \=\> {     const candidate \= new Candidate(nombre, partido, \[\])     candidate.id \= id     candidate.votos \= votos     return candidate   })   return zona } |
-| :---- |
+```javascript
+async getZonaSeleccionada(id) {
+    const callToZonaSeleccionada = await axios.get(SERVER_CONNECTION + '/zonas/' + id)
+    const zona = callToZonaSeleccionada.data
+    zona.candidatos = zona.candidatos.map(({ id, nombre, partido, votos }) => {
+        const candidate = new Candidate(nombre, partido, [])
+        candidate.id = id
+        candidate.votos = votos
+        return candidate
+    })
+    return zona
+}
+```
 
 Claro, estamos creando un objeto de dominio sin toda la información completa (como las promesas o las opiniones), pero con los métodos que necesitamos para registrar el voto[^4].
 
 Ahora sí podemos pedirle al componente React que registre el voto:
 
-| const registrarVoto \= function(candidate) {    return \<Button icon\="pi pi-user-plus" tooltip\="Registrar Voto" className\="p-button-secondary p-button-raised p-button-rounded" onClick\={async () \=\> {      candidate.registrarVoto()      await candidateService.actualizar(candidate)      setZonaSeleccionada({ ...zonaSeleccionada })    }}/\> } |
-| :---- |
+```jsx
+const registrarVoto = function(candidate) {
+    return <Button 
+        icon="pi pi-user-plus" 
+        tooltip="Registrar Voto" 
+        className="p-button-secondary p-button-raised p-button-rounded" 
+        onClick={async () => {
+            candidate.registrarVoto()
+            await candidateService.actualizar(candidate)
+            setZonaSeleccionada({ ...zonaSeleccionada })
+        }}
+    />
+}
+```
 
 El CandidateService (en la app cliente React) tiene que descomponer el objeto de dominio y enviar el JSON correspondiente al enviar el método PUT de http. Enviar directamente la referencia candidate puede resultar en conflictos porque la fecha de creación del partido es un objeto Luxon que aparentemente no se lleva bien con el mecanismo de serialización:
 
-| async actualizar(candidate) {   console.log('candidate', candidate)   await axios.put(SERVER\_CONNECTION \+ 'candidatos/' \+ candidate.id, candidate) } |
-| :---- |
+```javascript
+async actualizar(candidate) {
+    console.log('candidate', candidate)
+    await axios.put(SERVER_CONNECTION + 'candidatos/' + candidate.id, candidate)
+}
+```
 
 Vemos que en el caso del candidate Manuel Ramos el pedido http falla con un código 400 (Bad Request):  
 ![][image15]
 
 Entonces vamos a enviar un JSON únicamente con el id, los votos y las promesas:
 
-| async actualizar(candidate) {   await axios.put(SERVER\_CONNECTION \+ CANDIDATE\_URI \+ candidate.id, {     id: candidate.id,     votos: candidate.votos,     promesas: candidate.promesas.map(promesa \=\> promesa.toDTO()),   }) } |
-| :---- |
+```javascript
+async actualizar(candidate) {
+    await axios.put(SERVER_CONNECTION + CANDIDATE_URI + candidate.id, {
+        id: candidate.id,
+        votos: candidate.votos,
+        promesas: candidate.promesas.map(promesa => promesa.toDTO()),
+    })
+}
+```
 
 Como la promesa tiene a su vez otra fecha generada por Luxon, se convierte a formato string en el método toDTO de Promesa. El lector puede ver la implementación final.
 
@@ -893,9 +1243,9 @@ Veamos ahora en el Workbench del motor cómo están organizados los datos:
 | 1 | Elecciones nacionales |
 | 2 | Springfield |
 
-**Zona\_Candidatos**
+**Zona_Candidatos**
 
-| Zona\_id | Candidato\_id |
+| Zona_id | Candidato_id |
 | :---- | :---- |
 | 1 | 1 |
 | 1 | 2 |
@@ -907,7 +1257,7 @@ Veamos ahora en el Workbench del motor cómo están organizados los datos:
 
 **Candidato**
 
-| Id | Nombre | Votos | Partido\_id |
+| Id | Nombre | Votos | Partido_id |
 | :---- | :---- | :---- | :---- |
 | 1 | Julio Sosa | 8 | 1 |
 | 2 | Myriam Benítez | 2 | 1 |
@@ -949,8 +1299,9 @@ El lector puede seguir viendo las otras tablas, le dejamos un DER que pueden obt
 
 Vamos a jugar ahora a hacer mapeos de otro tipo, es el principal motivo por el cual elegimos una estrategia create-drop en el archivo *application.yml* al inicializar la aplicación:
 
-| ddl-auto: create-drop |
-| :---- |
+```yaml
+ddl-auto: create-drop
+```
 
 Esto significa que cada vez que se inicialice la aplicación estaremos destruyendo las tablas y recreándolas nuevamente. Otras opciones son:
 
@@ -965,8 +1316,22 @@ No recomendamos utilizar la estrategia create-drop para el trabajo práctico ni 
 
 Vamos a modificar la estrategia de mapeo de herencia de Partido, cambiando a una tabla por clase concreta:
 
-| @Entity @JsonTypeInfo(use \= JsonTypeInfo.Id.NAME, include \= JsonTypeInfo.As.PROPERTY, property \= "type") @JsonSubTypes(    JsonSubTypes.Type(value \= Peronista::class, name \= "PJ"),    JsonSubTypes.Type(value \= Preservativo::class, name \= "PRE") ) @Inheritance(strategy=InheritanceType.TABLE\_PER\_CLASS) abstract class Partido { |
-| :---- |
+```kt
+@Entity 
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME, 
+    include = JsonTypeInfo.As.PROPERTY, 
+    property = "type"
+)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = Peronista::class, name = "PJ"),
+    JsonSubTypes.Type(value = Preservativo::class, name = "PRE")
+)
+@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
+abstract class Partido {
+    ...
+}
+```
 
 El carácter declarativo de Hibernate permite que con solo modificar la annotation el resultado sea totalmente diferente. Veamos cómo quedó el mapeo:
 
@@ -985,30 +1350,30 @@ El carácter declarativo de Hibernate permite que con solo modificar la annotati
 
 Aquí vemos que los dos primeros partidos son peronistas y el tercero que es Preservativo tiene el identificador 3\. Tampoco necesitamos columna *discriminator*, porque cada tabla contiene la información sobre la clase concreta a utilizar por Hibernate. Si observaron en la consola los queries, el de las zonas no cambió, mientras que el de los candidatos es:
 
-SELECT this\_.id                AS id0\_2\_,   
-       this\_.descripcion       AS descripc2\_0\_2\_,   
-       candidatos2\_.zona\_id    AS Zona1\_0\_4\_,   
-       candidato3\_.id          AS candidatos2\_4\_,   
-       candidato3\_.id          AS id1\_0\_,   
-       candidato3\_.nombre      AS nombre1\_0\_,   
-       candidato3\_.partido\_id  AS partido3\_1\_0\_,   
-       partido4\_.id            AS id3\_1\_,   
-       partido4\_.afiliados     AS afiliados3\_1\_,   
-       partido4\_.nombre        AS nombre3\_1\_,   
-       partido4\_.populista     AS populista4\_1\_,   
-       partido4\_.fechacreacion AS fechaCre1\_5\_1\_,   
-       partido4\_.clazz\_        AS clazz\_1\_   
-FROM   zona this\_   
-       LEFT OUTER JOIN zona\_candidato candidatos2\_   
-                    ON this\_.id \= candidatos2\_.zona\_id   
-       LEFT OUTER JOIN candidato candidato3\_   
-                    ON candidatos2\_.candidatos\_id \= candidato3\_.id   
+SELECT this_.id                AS id0_2_,   
+       this_.descripcion       AS descripc2_0_2_,   
+       candidatos2_.zona_id    AS Zona1_0_4_,   
+       candidato3_.id          AS candidatos2_4_,   
+       candidato3_.id          AS id1_0_,   
+       candidato3_.nombre      AS nombre1_0_,   
+       candidato3_.partido_id  AS partido3_1_0_,   
+       partido4_.id            AS id3_1_,   
+       partido4_.afiliados     AS afiliados3_1_,   
+       partido4_.nombre        AS nombre3_1_,   
+       partido4_.populista     AS populista4_1_,   
+       partido4_.fechacreacion AS fechaCre1_5_1_,   
+       partido4_.clazz_        AS clazz_1_   
+FROM   zona this_   
+       LEFT OUTER JOIN zona_candidato candidatos2_   
+                    ON this_.id \= candidatos2_.zona_id   
+       LEFT OUTER JOIN candidato candidato3_   
+                    ON candidatos2_.candidatos_id \= candidato3_.id   
        LEFT OUTER JOIN (**SELECT id,**   
                                **afiliados,**   
                                **nombre,**   
                                **populista,**   
                                **NULL AS fechaCreacion,**   
-                               **1    AS clazz\_**   
+                               **1    AS clazz_**   
                         **FROM   peronista**   
                         **UNION**   
                         **SELECT id,**   
@@ -1016,37 +1381,62 @@ FROM   zona this\_
                                **nombre,**   
                                **NULL AS populista,**   
                                **fechacreacion,**   
-                               **2    AS clazz\_**   
-                        **FROM   preservativo**) partido4\_   
-                    ON candidato3\_.partido\_id \= partido4\_.id   
-WHERE  this\_.id \= ? 
+                               **2    AS clazz_**   
+                        **FROM   preservativo**) partido4_   
+                    ON candidato3_.partido_id \= partido4_.id   
+WHERE  this_.id \= ? 
 
 Claro, tiene que armar un *union* de tablas dejando en null los campos disjuntos... Vemos el DER generado  
-![DER\_Politics\_2.png][image17]  
+![DER_Politics_2.png][image17]  
 (no hay FK hacia Partido, es ad-hoc)
 
 # **17 Mapeo única tabla por jerarquía** {#17-mapeo-única-tabla-por-jerarquía}
 
 Nuevamente cambiamos la estrategia del partido:
 
-| @Entity @JsonTypeInfo(use \= JsonTypeInfo.Id.NAME, include \= JsonTypeInfo.As.PROPERTY, property \= "type") @JsonSubTypes(    JsonSubTypes.Type(value \= Peronista::class, name \= "PJ"),    JsonSubTypes.Type(value \= Preservativo::class, name \= "PRE") ) @Inheritance(strategy=InheritanceType.SINGLE\_TABLE) @DiscriminatorColumn(name="tipo\_partido",                      discriminatorType=DiscriminatorType.INTEGER) abstract class Partido { |
-| :---- |
+```kt
+@Entity 
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME, 
+    include = JsonTypeInfo.As.PROPERTY, 
+    property = "type"
+)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = Peronista::class, name = "PJ"),
+    JsonSubTypes.Type(value = Preservativo::class, name = "PRE")
+)
+@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name="tipo_partido", discriminatorType=DiscriminatorType.INTEGER)
+abstract class Partido {
+    ...
+}
+```
 
 Dejamos el generador de ids tal cual estaba antes.
 
 Ahora necesitamos definir un discriminator para diferenciar los partidos peronistas de los preservativos, lo haremos con una columna de tipo entera donde 1 \= Peronista, 2 \= Preservativo (por defecto se genera un atributo dtype que almacena el nombre de la clase: Peronista o Preservativo en este caso)
 
-| @Entity @DiscriminatorValue("1") class Peronista : Partido() { |
-| :---- |
+```kt
+@Entity 
+@DiscriminatorValue("1") 
+class Peronista : Partido() {
+    ...
+}
+```
 
-| @Entity @DiscriminatorValue("2") class Preservativo : Partido() { |
-| :---- |
+```kt
+@Entity 
+@DiscriminatorValue("2") 
+class Preservativo : Partido() {
+    ...
+}
+```
 
 Corremos la app y vemos cómo queda la única tabla que contiene todos los partidos[^5]
 
 **Partido**
 
-| tipo\_partido | id | afiliados | nombre | populista | fechaCreacion |
+| tipo_partido | id | afiliados | nombre | populista | fechaCreacion |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | 1*\=peronista* | 1 | 60000 | FREJULI | 1 | *null* |
 | 1*\=peronista* | 2 | 5000 | Peroné | 0 | *null* |
@@ -1056,31 +1446,31 @@ Ahora sí utilizamos el discriminator: 1 para los peronistas, 2 para los preserv
 
 Veamos el query que se genera:
 
-SELECT this\_.id                AS id0\_2\_,   
-       this\_.descripcion       AS descripc2\_0\_2\_,   
-       candidatos2\_.zona\_id    AS Zona1\_0\_4\_,   
-       candidato3\_.id          AS candidatos2\_4\_,   
-       candidato3\_.id          AS id1\_0\_,   
-       candidato3\_.nombre      AS nombre1\_0\_,   
-       candidato3\_.partido\_id  AS partido3\_1\_0\_,   
-       partido4\_.id            AS id3\_1\_,   
-       partido4\_.afiliados     AS afiliados3\_1\_,   
-       partido4\_.nombre        AS nombre3\_1\_,   
-       partido4\_.populista     AS populista3\_1\_,   
-       partido4\_.fechacreacion AS fechaCre6\_3\_1\_,   
-       partido4\_.tipocandidato AS tipoCand1\_3\_1\_   
-FROM   zona this\_   
-       LEFT OUTER JOIN zona\_candidato candidatos2\_   
-                    ON this\_.id \= candidatos2\_.zona\_id   
-       LEFT OUTER JOIN candidato candidato3\_   
-                    ON candidatos2\_.candidatos\_id \= candidato3\_.id   
-       **LEFT OUTER JOIN partido partido4\_**   
-                    **ON candidato3\_.partido\_id \= partido4\_.id**   
-WHERE  this\_.id \= ? 
+SELECT this_.id                AS id0_2_,   
+       this_.descripcion       AS descripc2_0_2_,   
+       candidatos2_.zona_id    AS Zona1_0_4_,   
+       candidato3_.id          AS candidatos2_4_,   
+       candidato3_.id          AS id1_0_,   
+       candidato3_.nombre      AS nombre1_0_,   
+       candidato3_.partido_id  AS partido3_1_0_,   
+       partido4_.id            AS id3_1_,   
+       partido4_.afiliados     AS afiliados3_1_,   
+       partido4_.nombre        AS nombre3_1_,   
+       partido4_.populista     AS populista3_1_,   
+       partido4_.fechacreacion AS fechaCre6_3_1_,   
+       partido4_.tipocandidato AS tipoCand1_3_1_   
+FROM   zona this_   
+       LEFT OUTER JOIN zona_candidato candidatos2_   
+                    ON this_.id \= candidatos2_.zona_id   
+       LEFT OUTER JOIN candidato candidato3_   
+                    ON candidatos2_.candidatos_id \= candidato3_.id   
+       **LEFT OUTER JOIN partido partido4_**   
+                    **ON candidato3_.partido_id \= partido4_.id**   
+WHERE  this_.id \= ? 
 
 Aquí vemos que solamente hacemos left outer join contra Partido (un solo join). Veamos cómo queda el DER:
 
-![DER\_Politics\_3.png][image18]
+![DER_Politics_3.png][image18]
 
 # **18 Migraciones** {#18-migraciones}
 
@@ -1098,8 +1488,25 @@ Algunas herramientas que pueden ver son [Flyway](https://flywaydb.org/), [Liquib
 * una posibilidad es hacer el testeo de integración entre el repositorio y el mapeo definido sobre el objeto de dominio: creamos una zona y la buscamos, por ejemplo. Spring Boot permite la anotación @Transactional muy útil para el testeo, que genera una transacción y luego la rollbackea al terminar cada test.  
 * otra opción es hacer un testeo que incluya todos los componentes de Spring Boot: controller, servicios, repositorio y objeto de dominio mapeado. Este test es de más alto nivel, un test funcional de la API como la van a consumir. Vemos cómo se implementa el test que modifica un candidate:
 
-| @Test @Transactional fun \`actualizar la informacion de una persona candidata\`() {    val candidate \= getCandidateDePrueba()    assertEquals(0, candidate.votos)    candidate.reset()    candidate.votar()    val responseEntity \= mockMvc.perform(        MockMvcRequestBuilders.put("/candidates/" \+ candidate.id)            .contentType(MediaType.APPLICATION\_JSON)            .content(mapper.writeValueAsString(candidate))    ).andReturn().response    assertEquals(200, responseEntity.status)    val candidateActualizado \=         repoCandidates.findByNombre(CANDIDATE\_NOMBRE).get()    assertEquals(1, candidateActualizado.votos) } |
-| :---- |
+```kt
+@Test 
+@Transactional 
+fun `actualizar la informacion de una persona candidata`() {
+    val candidate = getCandidateDePrueba()
+    assertEquals(0, candidate.votos)
+    candidate.reset()
+    candidate.votar()
+    val responseEntity = mockMvc.perform(
+        MockMvcRequestBuilders.put("/candidates/" + candidate.id)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(candidate))
+    ).andReturn().response
+    assertEquals(200, responseEntity.status)
+    val candidateActualizado = 
+        repoCandidates.findByNombre(CANDIDATE_NOMBRE).get()
+    assertEquals(1, candidateActualizado.votos)
+}
+```
 
 La anotación @Transactional es la que permite que el efecto colateral no se propague a los siguientes tests: abre una transacción dentro del test y al finalizar lo rollbackea. Esto impide que la segunda vez que lo ejecutemos el test falle al verificar que el candidate tenga 0 votos.
 
