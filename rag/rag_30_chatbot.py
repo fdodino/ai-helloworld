@@ -1,0 +1,65 @@
+import os
+from dotenv import load_dotenv
+from pinecone import Pinecone
+from groq import Groq
+
+load_dotenv()
+llm = Groq()
+
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+dense_index = pc.Index("phm")
+assistant_message = "How can I help you today?"
+print(f"Assistant: {assistant_message}\n")
+
+user_input = input("User: ")
+history = [
+  {"role": "developer", "content": """You are an AI teacher who is knowledgeable
+   about software object/relational mapping"""},
+  {"role": "assistant", "content": assistant_message}
+]
+
+while user_input != "exit":
+  # RAG Step #1: Retrieve relevant chunks from vector DB:
+  results = dense_index.search(
+  namespace="orm",
+  query={
+    "top_k": 3,
+    "inputs": {
+      'text': user_input
+    }
+  }
+)
+
+  # RAG Step #2: Convert chunks into one long string of documentation
+  documentation = ""
+  for hit in results['result']['hits']:
+    fields = hit.get('fields')
+    chunk_text = fields.get('chunk_text')
+    documentation += chunk_text
+
+  # RAG Step #3: Insert retrieved documentation into prompt
+  history += [
+    {"role": "user",
+    "content": f"""Here are excerpts from the O/R mapping documentation: {documentation}. Use whatever
+    info from the above documentation excerpts (and no other info)
+    to answer the following query: {user_input}"""}
+  ]
+  response = llm.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    temperature=0,
+    messages=[
+      {
+        "role": "user",
+        "content": f"""Here are excerpts from the O/R mapping documentation: {documentation}. Use whatever
+    info from the above documentation excerpts (and no other info)
+    to answer the following query: {user_input}"""
+      }
+    ]
+  )
+
+  answer = response.choices[0].message.content
+  print(f"\nAssistant: {answer}\n")
+  history += [
+    {"role": "assistant", "content": answer},
+  ]
+  user_input = input("User: ")
