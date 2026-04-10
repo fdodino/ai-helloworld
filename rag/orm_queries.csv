@@ -1,0 +1,101 @@
+Query Topic,User Query
+Lazy loading,¿Qué es el Lazy Loading y cuál es su objetivo principal en un ORM?
+Lazy loading,¿Qué excepción ocurre en Hibernate al intentar acceder a una colección perezosa fuera de la sesión?
+Lazy loading,¿Cómo ayuda el Lazy Loading a reducir el consumo de memoria en la aplicación?
+Lazy loading,¿Cuál es la diferencia entre FetchType.LAZY y FetchType.EAGER?
+Lazy loading,¿Qué es un 'Proxy object' en el contexto de carga diferida?
+Lazy loading,¿Cómo se puede forzar la carga de una relación Lazy dentro de una transacción?
+Lazy loading,¿En qué situaciones el Lazy Loading puede afectar negativamente el rendimiento?
+Lazy loading,¿Qué sucede si se serializa un objeto que tiene colecciones Lazy no inicializadas?
+Lazy loading,¿Cómo influye el uso de 'Join Fetch' en una consulta JPQL respecto al Lazy Loading?
+Lazy loading,¿Es posible configurar Lazy Loading a nivel de atributo básico o solo en asociaciones?
+Lazy loading,¿Qué herramienta de profiling usarías para detectar problemas de Lazy Loading?
+Lazy loading,¿Cómo se comporta el Lazy Loading en una relación OneToOne opcional?
+Lazy loading,¿Qué ventaja tiene el Lazy Loading al manejar grandes volúmenes de datos históricos?
+Lazy loading,¿Por qué se dice que el Lazy Loading es el valor por defecto para colecciones en JPA?
+Lazy loading,¿Qué impacto tiene el Lazy Loading en el diseño de microservicios?
+Lazy loading,¿Cómo se puede evitar la LazyInitializationException en arquitecturas multicapa?
+Lazy loading,¿Qué relación existe entre el contexto de persistencia y la resolución de proxies?
+Lazy loading,¿Se puede desactivar el Lazy Loading globalmente en una unidad de persistencia?
+Lazy loading,¿Cómo afecta el Lazy Loading al conteo de consultas SQL generadas?
+Lazy loading,¿Qué ocurre con el Lazy Loading cuando se cierra el EntityManager?
+Open in view,¿En qué consiste el patrón Open Session in View (OSIV)?
+Open in view,¿Cuál es el principal beneficio de habilitar OSIV en una aplicación web?
+Open in view,¿Por qué se considera a OSIV un antipatrón en arquitecturas de alto rendimiento?
+Open in view,¿Cómo afecta OSIV a la gestión de conexiones de la base de datos?
+Open in view,¿Qué sucede con la transacción de base de datos cuando se usa OSIV?
+Open in view,¿En qué capa de la aplicación suele implementarse el filtro para OSIV?
+Open in view,¿Cómo evita OSIV la famosa LazyInitializationException en la capa de presentación?
+Open in view,¿Qué riesgo de seguridad existe al exponer entidades gestionadas directamente en la vista?
+Open in view,¿Cuál es la alternativa recomendada a OSIV para pasar datos a la vista?
+Open in view,¿Cómo impacta OSIV en el tiempo de respuesta total de una petición HTTP?
+Open in view,¿Qué pasa si ocurre un error de base de datos durante el renderizado de la vista con OSIV?
+Open in view,¿Cómo se deshabilita OSIV en una aplicación Spring Boot por defecto?
+Open in view,¿Es OSIV compatible con aplicaciones que no son basadas en Servlets?
+Open in view,¿Qué relación hay entre el patrón Data Transfer Object (DTO) y la eliminación de OSIV?
+Open in view,¿Cómo afecta OSIV a la escalabilidad de las conexiones en el pool?
+Open in view,¿Por qué OSIV puede causar que una operación de lectura se convierta involuntariamente en escritura?
+Open in view,¿Qué sucede con el 'dirty checking' cuando la sesión permanece abierta en la vista?
+Open in view,¿Es posible limitar OSIV solo a ciertas rutas de la aplicación?
+Open in view,¿Qué impacto tiene OSIV en las pruebas unitarias de la capa de servicios?
+Open in view,¿Cómo influye OSIV en el uso de transacciones de solo lectura?
+Mapeo de herencia,¿Cuáles son las tres estrategias principales de mapeo de herencia en JPA?
+Mapeo de herencia,¿En qué consiste la estrategia 'Single Table per Class Hierarchy'?
+Mapeo de herencia,¿Qué es una 'Discriminator Column' y para qué se utiliza?
+Mapeo de herencia,¿Cuáles son las ventajas de la estrategia 'Table Per Concrete Class'?
+Mapeo de herencia,¿Qué desventaja de rendimiento tiene la estrategia 'Joined Table' debido a los JOINs?
+Mapeo de herencia,¿Cómo se utiliza la anotación @Inheritance en una clase base?
+Mapeo de herencia,¿Qué sucede con las restricciones de integridad (NOT NULL) en la estrategia 'Single Table'?
+Mapeo de herencia,¿Cuándo es preferible usar @MappedSuperclass en lugar de una estrategia de herencia completa?
+Mapeo de herencia,¿Cómo se mapean los atributos comunes en la estrategia de tabla única?
+Mapeo de herencia,¿Se pueden mezclar diferentes estrategias de herencia en una misma jerarquía?
+Mapeo de herencia,¿Cómo afecta la herencia a las consultas polimórficas?
+Mapeo de herencia,¿Qué estrategia genera un esquema de base de datos más normalizado?
+Mapeo de herencia,¿Qué anotación se usa para definir el valor del discriminador en cada subclase?
+Mapeo de herencia,¿Cómo se manejan los IDs compartidos en la estrategia 'Joined'?
+Mapeo de herencia,¿Qué impacto tiene la estrategia 'Table per Class' en las consultas sobre la clase padre?
+Mapeo de herencia,¿Es posible tener una clase abstracta como raíz de una jerarquía de herencia?
+Mapeo de herencia,¿Cómo se define el comportamiento de carga (Eager/Lazy) en una jerarquía de herencia?
+Mapeo de herencia,¿Qué ocurre con los índices de base de datos en la estrategia de tabla única?
+Mapeo de herencia,¿Cómo se gestiona el versionado (@Version) en entidades con herencia?
+Mapeo de herencia,¿Cuál es la estrategia por defecto si no se especifica ninguna en @Inheritance?
+Mapeo *-to-many,¿Qué diferencia hay entre una relación OneToMany unidireccional y una bidireccional?
+Mapeo *-to-many,¿Cuál es la función del atributo 'mappedBy' en una relación ManyToMany?
+Mapeo *-to-many,¿Cómo se define una tabla de unión (Join Table) en un mapeo ManyToMany?
+Mapeo *-to-many,¿Por qué es recomendable inicializar las colecciones de tipo Set o List en la entidad?
+Mapeo *-to-many,¿Qué problema de rendimiento resuelve el uso de un Set en lugar de un List en ManyToMany?
+Mapeo *-to-many,¿Cómo se mapea una relación ManyToOne en el lado propietario de la relación?
+Mapeo *-to-many,¿Qué es el problema de las 'N+1 consultas' en relaciones *-to-many?
+Mapeo *-to-many,¿Cómo se implementa una relación ManyToMany con atributos adicionales en la tabla intermedia?
+Mapeo *-to-many,¿Qué anotación se utiliza para ordenar los elementos de una colección en el mapeo?
+Mapeo *-to-many,¿Cuál es la diferencia entre @JoinColumn y @JoinTable?
+Mapeo *-to-many,¿Cómo afecta el uso de colecciones grandes al rendimiento del ORM?
+Mapeo *-to-many,¿Qué sucede si se olvida actualizar ambos lados de una relación bidireccional en memoria?
+Mapeo *-to-many,¿Para qué sirve la anotación @ElementCollection?
+Mapeo *-to-many,¿Cómo se puede mapear un Map en lugar de un List para una relación OneToMany?
+Mapeo *-to-many,¿Qué estrategia de Fetch se recomienda por defecto para relaciones ManyToMany?
+Mapeo *-to-many,¿Cómo influye el borrado de un elemento en una colección OneToMany con Orphan Removal?
+Mapeo *-to-many,¿Qué importancia tiene el método hashCode() y equals() en entidades relacionadas?
+Mapeo *-to-many,¿Cómo se define la clave foránea en una relación OneToMany unidireccional?
+Mapeo *-to-many,¿Es posible tener una relación ManyToOne que no sea obligatoria (optional=true)?
+Mapeo *-to-many,¿Cómo se maneja la paginación en consultas que involucran relaciones *-to-many?
+Cascada,¿Qué significa la opción CascadeType.ALL en JPA?
+Cascada,¿Cuál es la diferencia entre CascadeType.PERSIST y CascadeType.MERGE?
+Cascada,¿Cómo funciona CascadeType.REMOVE en una relación padre-hijo?
+Cascada,¿Qué es 'Orphan Removal' y en qué se diferencia de CascadeType.REMOVE?
+Cascada,¿Por qué hay que tener cuidado al usar CascadeType.REMOVE en relaciones ManyToMany?
+Cascada,¿Cuándo es útil usar CascadeType.REFRESH?
+Cascada,¿Qué sucede si se aplica persistencia a un objeto padre pero el hijo no tiene cascada definida?
+Cascada,¿Es la cascada de JPA igual a las restricciones ON DELETE CASCADE de la base de datos?
+Cascada,¿Cómo se propaga la operación de 'Detach' mediante cascada?
+Cascada,¿Se puede definir el tipo de cascada de forma asimétrica en una relación bidireccional?
+Cascada,¿Qué impacto tiene la cascada en el rendimiento de las operaciones de guardado masivo?
+Cascada,¿Cuál es el riesgo de usar CascadeType.ALL en todas las relaciones por defecto?
+Cascada,¿Cómo interactúa la cascada con las transacciones de base de datos?
+Cascada,¿Qué ocurre con los objetos hijos cuando se hace un merge del padre con CascadeType.MERGE?
+Cascada,¿Se puede usar cascada para actualizar automáticamente la fecha de modificación de hijos?
+Cascada,¿En qué casos es mejor no usar ningún tipo de cascada?
+Cascada,¿Qué anotación se usa para configurar la cascada en Hibernate específicamente?
+Cascada,¿Cómo afecta la cascada al ciclo de vida de las entidades gestionadas?
+Cascada,¿Es posible aplicar cascada solo para la operación de persistir pero no para eliminar?
+Cascada,¿Cómo se verifica que la cascada está funcionando correctamente mediante logs de SQL?
