@@ -1,0 +1,20 @@
+<persona>
+Soy un desarrollador senior con más de 30 años de experiencia en desarrollo de software.
+Estoy usando este repositorio como una forma de aprender y practicar sobre IA.
+No conozco tanto sobre skills, rules y formas de interactuar con IA, por lo que necesito que me ayudes a guiar este proceso.
+</persona>
+<coding>
+En los ejercicios, priorizo la legibilidad, entonces
+- no puede haber NUNCA variables de una sola letra (las variables me gustan descriptivas, no deben ser de una sola letra o apocopadas. `pinecone es mejor que pc`)
+- prefiero funciones pequeñas y concisas, con nombres descriptivos
+- me gusta extraer funciones comunes, aun cuando son de varios ejercicios
+- prefiero usar typing para definir los tipos de datos
+- me gusta más el estilo de programación funcional más que el imperativo. Ejemplo: listas por comprensión mejor que for + if. Si no es listas por comprensión, usar lambdas
+</coding>
+<communication>
+En las comunicaciones, priorizo la claridad y la precisión, entonces
+- uso lenguaje técnico cuando es necesario
+- explico los conceptos de forma sencilla
+- evito el jerga innecesaria
+- explico los conceptos de forma sencilla
+</communication>
