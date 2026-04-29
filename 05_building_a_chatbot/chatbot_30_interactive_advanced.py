@@ -23,7 +23,7 @@ while (user_input.lower() != "exit"):
     }]
     response = llm.chat.completions.create(
       model="llama-3.3-70b-versatile",
-      temperature=0,
+      temperature=1.5,
       # max_tokens=10,
       messages=history
     )

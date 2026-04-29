@@ -13,7 +13,7 @@ response = llm.chat.completions.create(
   messages=[
     {
       "role": "user",
-      "content": f"Translate the following phrase into Spanish: {user_input}"
+      "content": f"Translate the following phrase into Spanish: {user_input}. Just the translation."
     }
   ]
 )
