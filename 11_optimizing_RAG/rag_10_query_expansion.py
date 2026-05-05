@@ -46,20 +46,20 @@ def user_prompt(documentation, user_input):
   }
 
 def llm_response(prompt):
-  return llm.chat.completions.create(
+  response = llm.chat.completions.create(
     model="llama-3.3-70b-versatile",
     temperature=0,
     messages=prompt
   )
+  return response.choices[0].message.content
 
 def expand_query(conversation):
-response = llm.responses.create(
-    model="gpt-4.1-nano",
-    temperature=0,
-    input=f"Rewrite, in an expanded way, what the user means to say
-in their final prompt of the following conversation: {conversation}"
-)
-return response.output_text
+  response = llm.responses.create(
+      model="gpt-4.1-nano",
+      temperature=0,
+      input=f"Rewrite, in an expanded way, what the user means to saycin their final prompt of the following conversation: {conversation}"
+  )
+  return response.output_text
 
 # ============================================================================
 #
@@ -88,12 +88,11 @@ if __name__ == "__main__":
     
     response = llm_response(llamada_mensajes)
 
-    answer = response.choices[0].message.content
-    print(f"\nAssistant: {answer}\n")
+    print(f"\nAssistant: {response}\n")
     
     # Guardamos en el historial solo la pregunta limpia y la respuesta
     # así evitamos saturar el contexto con fragmentos de docs viejos
     conversacion_history.append({"role": "user", "content": user_input})
-    conversacion_history.append({"role": "assistant", "content": answer})
+    conversacion_history.append({"role": "assistant", "content": response})
     
     user_input = input("User: ")
