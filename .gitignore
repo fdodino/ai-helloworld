@@ -10,3 +10,6 @@ wheels/
 .venv
 token.json
 .env
+
+# podcasts
+*.mp3
